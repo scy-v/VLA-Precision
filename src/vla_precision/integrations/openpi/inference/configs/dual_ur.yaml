@@ -1,0 +1,198 @@
+experiment:
+  name: clean_test_tube_with_brush
+output_root: ./results
+
+policy:
+  location: local # local or server
+  host: 127.0.0.1
+  bind_host: 0.0.0.0
+  port: 8000
+  cuda_visible_devices: "0"
+
+task:
+  # Task 1 (default): taks1_cfg.yaml
+  # description: "Clean the inside of a test tube using the brush"
+  # Task 2: task2_cfg.yaml
+  description: "Clean the inside of a test tube using the brush"
+
+video:
+  fps: 15
+  visualize: true
+
+record:
+  num_episodes: 20
+  episode_timeout_sec: 120
+  show_action_fps: false
+  show_inference_fps: false
+  show_time: False
+
+robot:
+  kind: dual_ur
+  # The action chunk is synchronized, but every hardware/control parameter
+  # below lives under its own arm. State/action order is always left then right.
+  # Unlike key teleop, policy output is already a metric/radian delta, so no
+  # keyboard step_size is applied. Per-arm speed and force clipping are below.
+  action_horizon: 3
+  direct_action_horizon: false
+  arms:
+    left:
+      ip: "192.168.201.12"
+      action_fps: 100
+      debug: false
+      control_space: force       # position or force
+      reference_frame: tcp       # base or tcp
+      filter_zero_output: false
+      action_idle_hold_enabled: true
+      # Translation is held per base-frame axis; orientation is held as one complete rotation.
+      action_idle_position_threshold: 0.0001 # meters, per base-frame position axis
+      action_idle_rotation_threshold: 0.001 # radians, complete rotation delta
+
+      pre_reset_tcp_pose: null
+      # xyz + Euler xyz (radians); converted to rotvec before moveL.
+      # Task 1 (default): use the runtime robot.left_init_pose value, not the
+      # stale z=0.329437 value in task 1's user_notes string.
+      # init_tcp_pose: [0.320161, -0.233815, 0.309437, 3.14, 0.0, -2.337]
+      # Task 2:
+      init_tcp_pose: [0.128065, -0.345683, 0.264679, -2.6, 0.0, -2.356]
+      # xyz ranges in metres, Euler ranges in degrees.
+      init_pose_range: [0.03, 0.03, 0.03, 0.0, 0.0, 0.0]
+      target_tcp_pose: null
+      target_threshold: null
+      show_target_error: false
+
+      gripper:
+        port: "/dev/ur_left_gripper"
+        init: true
+        reverse: false
+        fix_observation: false
+        close_threshold: 0.7
+        target_reached_open_threshold: 0.7
+        # Device command range corresponding to normalized policy commands [0, 1].
+        # Task 1: min_position: 0, max_position: 1000
+        # Task 2:
+        min_position: 80
+        max_position: 1000
+        # Task 1 (default)
+        # force: 60
+        # speed: 60
+        # Task 2: force: 100, speed: 100
+        force: 100
+        speed: 100
+
+      payload:
+        mass: 1.601
+        cog: [0.011, -0.002, 0.052]
+
+      position_mode:
+        speed: 0.2
+        acceleration: 0.2
+        servo_time: 0.1
+        lookahead_time: 0.1
+        gain: 300
+
+      force_mode:
+        # Task 1 and Task 2 both use this control frame. select_vector is
+        # interpreted in these rotated axes; code derives UR task_frame from it.
+        control_frame_euler_deg: [0.0, 0.0, 135.0]
+        kp: 1200
+        kd: 600
+        kp_rot: 2000
+        kd_rot: 400
+        rtde_freq: 100
+        # Task 1 (default)
+        # select_vector: [1, 1, 1, 1, 1, 1]
+        # Task 2: select_vector: [1, 1, 1, 1, 1, 1]
+        select_vector: [1, 1, 1, 1, 1, 1]
+        force_limit: [2, 2, 2, 2, 2, 2]
+        pos_delta: 0.048
+        vel_delta: 4.0
+        gain_scale: 1.5
+        force_type: 2
+
+    right:
+      ip: "192.168.201.11"
+      action_fps: 100
+      debug: false
+      control_space: force       # independent from the left arm
+      reference_frame: tcp
+      filter_zero_output: false
+      action_idle_hold_enabled: true
+      action_idle_position_threshold: 0.0001
+      action_idle_rotation_threshold: 0.001
+
+      pre_reset_tcp_pose: null
+      # xyz + Euler xyz (radians); converted to rotvec before moveL.
+      # Task 1 (default)
+      # init_tcp_pose: [-0.365416, 0.199311, 0.308071, -2.8, 0.0, 0.785]
+      # Task 2:
+      init_tcp_pose: [-0.362565, 0.183300, 0.264679, 3.14, 0.0, 0.785]
+      init_pose_range: [0.03, 0.03, 0.03, 0.0, 0.0, 0.0]
+      target_tcp_pose: null
+      target_threshold: null
+      show_target_error: false
+
+      gripper:
+        port: "/dev/ur_right_gripper"
+        init: true
+        reverse: false
+        fix_observation: false
+        close_threshold: 0.7
+        target_reached_open_threshold: 0.7
+        # Device command range corresponding to normalized policy commands [0, 1].
+        min_position: 0
+        max_position: 1000
+        # Task 1 (default)
+        # force: 100
+        # speed: 100
+        # Task 2: force: 60, speed: 100
+        force: 60
+        speed: 100
+
+      payload:
+        mass: 1.601
+        cog: [0.011, -0.002, 0.052]
+
+      position_mode:
+        speed: 0.2
+        acceleration: 0.2
+        servo_time: 0.1
+        lookahead_time: 0.1
+        gain: 300
+
+      force_mode:
+        # Task 1 and Task 2 both use this control frame. select_vector is
+        # interpreted in these rotated axes; code derives UR task_frame from it.
+        control_frame_euler_deg: [0.0, 0.0, -45.0]
+        kp: 1200
+        kd: 600
+        kp_rot: 2000
+        kd_rot: 400
+        rtde_freq: 100
+        # Task 1 (default)
+        # select_vector: [1, 1, 1, 1, 1, 1]
+        # Task 2: select_vector: [1, 1, 1, 1, 1, 1]
+        select_vector: [1, 1, 1, 1, 1, 1]
+        force_limit: [2, 2, 2, 2, 2, 2]
+        pos_delta: 0.048
+        vel_delta: 4.0
+        gain_scale: 1.5
+        force_type: 2
+
+cameras:
+  # Defaults copied from the current dual-keyteleop config; verify before use.
+  left_wrist_cam_serial: "346222071609"
+  right_wrist_cam_serial: "349522072056"
+  exterior_cam_serial: "419622072273"
+  fps: 15
+  width: 640
+  height: 480
+
+model:
+  name: "pi05_full_finetune_dual_ur"
+  # Must contain dual-arm norm stats: state mean length 38, action mean length 14.
+  # The existing insert_two_bottles_diagonal_rack_full_20000 checkpoint is
+  # single-arm (19D/7D), so it is intentionally not used here.
+  checkpoint_dir: "./checkpoints/stage1/pi05_full_finetune_dual_ur/clean_test_tube_with_brush"
+  checkpoint_step: 25000 # null or 0 selects the largest available step
+  infer_fps: 8
+  sample_steps: 10

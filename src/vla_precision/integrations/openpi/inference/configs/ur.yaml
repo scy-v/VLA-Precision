@@ -1,0 +1,91 @@
+experiment:
+  name: insert_two_bottles_diagonal_rack
+output_root: ./results
+
+policy:
+  location: local # local or server
+  host: 127.0.0.1 # GPU server address used by the robot client
+  bind_host: 0.0.0.0
+  port: 8000
+  cuda_visible_devices: "0"
+
+task:
+  description: "Insert two reagent bottles into diagonal rack slots"
+
+video:
+  fps: 15  # camera fps for recording
+  visualize: True # whether to visualize the images during execution
+
+record:
+  num_episodes: 20 # number of inference episodes to run
+  episode_timeout_sec: 60 # max seconds per episode before auto reset
+  show_action_fps: False # whether to print action loop FPS
+  show_inference_fps: False # whether to print inference loop FPS
+  show_time: True # whether to print elapsed episode time every second
+
+robot:
+  kind: ur
+  ip: "192.168.201.11" # robot_ip
+  gripper_port: "/dev/ur5e_left_gripper" # gripper_port
+  gripper_reverse: False  # If gripper moves opposite, flip this value
+  init_gripper: True # whether to run gripper init_state and init_feedback
+  fix_gripper: False # True requires an 18D state/6D action checkpoint and omits gripper I/O
+  close_threshold: 0.7 # threshold to determine gripper open/close
+  target_reached_gripper_open_threshold: 0.7 # normalized gripper open threshold required after target pose is reached
+  gripper_force: 80 # gripper force command
+  gripper_speed: 100 # gripper speed command
+  pre_reset_tcp_pose: null # set to null to skip pre-reset and move directly to init_tcp_pose + range
+  init_tcp_pose: [0.392232, 0.104898, 0.335162, -3.14, 0.0, -1.57]
+  init_pose_range: [0.03, 0.03, 0.03, 0.0, 0.0, 0.0] # max random range for init_tcp_pose [x, y, z, roll_deg, pitch_deg, yaw_deg]
+  target_tcp_pose: null # set both target_tcp_pose and target_threshold to null for manual double-Space success
+  target_threshold: null
+  show_target_error: False # print 6D reach error every target check
+  action_fps: 100
+  action_horizon: 3
+  direct_action_horizon: False # True: model predicts action_horizon steps; False: predict default horizon and execute first action_horizon
+  debug: False
+  control_space: force # position or force
+  reference_frame: tcp # base or tcp
+  filter_zero_output: False # replace near-zero 6D action deltas with zero forceMode in force control
+  # Translation is held per base-frame axis; orientation is held as one complete rotation.
+  action_idle_hold_enabled: True
+  action_idle_position_threshold: 0.0001 # meters, tested per base-frame position axis
+  action_idle_rotation_threshold: 0.001 # radians, tested on the complete rotation delta
+  payload:
+    mass: 1.601
+    cog: [0.011, -0.002, 0.052]
+  position_mode:
+    speed: 0.2
+    acceleration: 0.2
+    servo_time: 0.1
+    lookahead_time: 0.1
+    gain: 300
+  force_mode:
+    # Single-arm default: control frame is identical to the UR base frame.
+    control_frame_euler_deg: [0.0, 0.0, 0.0]
+    kp: 1200
+    kd: 600
+    kp_rot: 2000
+    kd_rot: 400
+    rtde_freq: 100
+    select_vector: [1, 1, 1, 1, 1, 1]
+    force_limit: [2, 2, 2, 2, 2, 2]
+    # pos_delta: 0.02  # old
+    pos_delta: 0.048 # new
+    vel_delta: 4.0
+    gain_scale: 1.5
+cameras:
+    wrist_cam_serial: "944622073455" # wrist camera serial number
+    exterior_cam_serial: "348522072391" # exterior camera serial number
+    fps: 15  # camera fps
+    width: 640
+    height: 480
+
+model:
+  # OpenPI extension TrainConfig.
+  name: "pi05_full_finetune_ur5e"
+  # Full-finetuned VLA checkpoint used for native inference.
+  checkpoint_dir: "./checkpoints/stage1/pi05_full_finetune_ur5e/insert_two_bottles_diagonal_rack"
+  checkpoint_step: 20000 # null or 0 selects the largest available step
+  infer_fps: 8
+  sample_steps: 10

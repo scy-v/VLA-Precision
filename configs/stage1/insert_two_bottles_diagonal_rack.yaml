@@ -1,0 +1,87 @@
+# Configuration format version.
+schema_version: 1
+
+# GPUs exposed to Stage-I normalization and full-parameter training.
+cuda_visible_devices: "0,1,2,3"
+# Maximum fraction of each visible GPU reserved by XLA.
+xla_memory_fraction: 0.9
+
+# Common Stage-I training parameters.
+openpi:
+  # OpenPI TrainConfig profile registered by the local extension.
+  name: pi05_full_finetune_ur5e
+  # Run name used by OpenPI checkpoints and W&B.
+  exp_name: insert_two_bottles_diagonal_rack
+  # Base PI0 or PI0.5 parameters loaded before full fine-tuning.
+  initialization_checkpoint: gs://openpi-assets/checkpoints/pi05_base/params
+  model:
+    # Number of actions predicted by the OpenPI model.
+    action_horizon: 50
+    # Default: pi0/pi0.5 normally uses 32. Change only for a different model or data schema.
+    action_dim: 32
+    # Default: standard pi0/pi0.5 training normally keeps this value.
+    max_token_len: 200
+  # Global OpenPI training batch size.
+  batch_size: 64
+  # Total optimizer steps for full-parameter fine-tuning.
+  num_train_steps: 30000
+  # Optimizer steps between OpenPI checkpoint saves.
+  save_interval: 10000
+  # Resume the existing run directory when true.
+  resume: false
+  # Replace an existing run directory when true.
+  overwrite: false
+  # Number of visible devices used by OpenPI FSDP sharding.
+  fsdp_devices: 1
+  # Warmup and cosine-decay learning-rate schedule.
+  lr_schedule:
+    warmup_steps: 10000
+    peak_lr: 0.00005
+    decay_steps: 1000000
+    decay_lr: 0.00005
+
+  # Less frequently changed OpenPI parameters.
+  project_name: vla-precision
+  num_workers: 2
+  optimizer:
+    b1: 0.9
+    b2: 0.95
+    eps: 0.00000001
+    weight_decay: 0.0000000001
+    clip_gradient_norm: 1.0
+  ema_decay: 0.99
+  log_interval: 100
+  keep_period: 5000
+  wandb_enabled: true
+  seed: 42
+
+# Common Stage-I data parameters. All indices are zero-based and materialized before sampling.
+data:
+  # Hugging Face LeRobot dataset identifier.
+  lerobot_repo_id: scylearning/insert_two_bottles_diagonal_rack_20260706_v01
+  # Optional local dataset mirror; null uses the normal LeRobot cache.
+  lerobot_root: null
+  # Zero-based state columns materialized before sampling.
+  state_indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+  # Zero-based action columns materialized before sampling.
+  action_indices: [0, 1, 2, 3, 4, 5, 6]
+  # Map policy image names to columns in the LeRobot dataset.
+  image_key_map:
+    base_0_rgb: observation.images.exterior_image
+    left_wrist_0_rgb: observation.images.wrist_image
+  extra_delta_transform: false
+
+  # Default data-column settings. Change only when the source dataset uses different names.
+  state_key: observation.state
+  action_key: action
+  prompt_from_task: false
+
+# Output roots following the standard OpenPI directory layout.
+paths:
+  checkpoint_root: ./checkpoints/stage1
+  cache_root: ./.cache
+  # Default: follows OpenPI's standard assets directory.
+  openpi_assets_root: ./assets
+
+# Default: only enables concise configuration logs and never changes training behavior.
+debug: false

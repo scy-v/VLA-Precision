@@ -1,0 +1,119 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vla-precision"
+version = "0.1.0"
+description = "ACoB and ACoB-Stream for efficient real-world online RL post-training of VLAs"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "gymnasium==1.0.0",
+    "ml-dtypes==0.5.0",
+    "numpy>=1.24,<2",
+    "omegaconf>=2.3.0,<3",
+    "pillow>=11.0.0",
+    "pyro5",
+    "pyyaml>=6.0",
+    "tyro>=0.9.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
+    "ruff>=0.8.6",
+]
+stage1 = [
+    # The pinned OpenPI commit imports these at runtime but does not declare them.
+    "chex>=0.1.85",
+    "lerobot",
+    "openpi",
+    "optax>=0.1.5",
+    "pandas>=2.2.0",
+    "polars>=1.30.0",
+    "pytest>=8.3.4",
+    "tqdm>=4.60.0",
+]
+stage2 = [
+    { include-group = "stage1" },
+    "absl-py>=0.12.0",
+    "agentlace",
+    "distrax>=0.1.2",
+    "msgpack>=1.0.5",
+    "scipy==1.11.4",
+    "tree>=0.2.4",
+    "websockets>=11.0",
+]
+real-robot = [
+    "crcmod>=1.7",
+    "evdev; sys_platform == 'linux'",
+    "flask==3.1.3",
+    "lerobot",
+    "opencv-python>=4.10.0.84",
+    "openpi-client",
+    "pynput>=1.8.2",
+    "python-can>=4.0,<5",
+    "pydhgripper==1.0.2",
+    "pyrealsense2==2.56.5.9235",
+    "pyserial>=3.5",
+    "requests>=2.31.0",
+    "roboticstoolbox-python==1.1.1",
+    "scipy==1.11.4",
+    "spatialgeometry==1.1.0",
+    "ur-rtde==1.6.2",
+    "zerorpc>=0.6.3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vla_precision"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"LICENSE" = "vla_precision/licenses/LICENSE"
+"third_party/NOTICE.md" = "vla_precision/licenses/NOTICE.md"
+
+[tool.uv]
+default-groups = []
+override-dependencies = [
+    "lerobot @ git+https://github.com/huggingface/lerobot@d6ea3bbce0fc8c75138f02639ac4ceaf12a67829",
+    "ml-dtypes==0.5.0",
+    "opencv-python-headless; sys_platform == 'never'",
+    "tensorstore==0.1.74",
+]
+
+[tool.uv.sources]
+agentlace = { git = "https://github.com/youliangtan/agentlace.git", rev = "cf2c337c5e3694cdbfc14831b239bd657bc4894d" }
+lerobot = { git = "https://github.com/huggingface/lerobot", rev = "d6ea3bbce0fc8c75138f02639ac4ceaf12a67829" }
+openpi = { git = "https://github.com/Physical-Intelligence/openpi.git", rev = "2d70d966582e711128ad8358d8dbf23d2cc3d658" }
+openpi-client = { git = "https://github.com/Physical-Intelligence/openpi.git", subdirectory = "packages/openpi-client", rev = "2d70d966582e711128ad8358d8dbf23d2cc3d658" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+# These files are deliberately close ports of the behavior-anchoring
+# ACoB/SERL utilities. Keep their source shape stable during the refactor;
+# style-only modernization belongs in a later, separately verified change.
+[tool.ruff.lint.per-file-ignores]
+"src/vla_precision/acob/networks.py" = ["ALL"]
+"src/vla_precision/acob/pretrained_resnet.py" = ["ALL"]
+"src/vla_precision/acob/training.py" = ["ALL"]
+"src/vla_precision/acob/vision.py" = ["ALL"]
+"src/vla_precision/acob_stream/buffers/_data_store.py" = ["ALL"]
+"src/vla_precision/acob_stream/buffers/_dataset.py" = ["ALL"]
+"src/vla_precision/acob_stream/buffers/_memory_replay.py" = ["ALL"]
+"src/vla_precision/acob_stream/buffers/_replay_base.py" = ["ALL"]
+# These low-level modules are likewise behavior-preserving ports of the
+# hardware implementation. Contract tests cover their control semantics;
+# style-only rewrites are intentionally deferred until physical revalidation.
+"src/vla_precision/robotics/servers/ur/server.py" = ["ALL"]
+"src/vla_precision/integrations/openpi/inference/backends/*.py" = ["ALL"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "hardware: requires a real robot or camera and explicit operator approval",
+    "parity: compares the refactored implementation with a read-only reference implementation",
+]
+addopts = "-m 'not hardware'"

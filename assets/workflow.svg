@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 112" role="img" aria-labelledby="title desc">
+  <title id="title">VLA-Precision workflow</title>
+  <desc id="desc">Teleoperation, supervised fine-tuning, online RL post-training, and real-robot deployment.</desc>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="10" y="24" width="350" height="64" rx="18" fill="#EEF6FF" stroke="#8BB9F0" stroke-width="2"/>
+    <circle cx="102" cy="56" r="16" fill="#5B8FC9"/>
+    <text x="102" y="63" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">1</text>
+    <text x="134" y="65" font-size="25" font-weight="600" fill="#315F91" textLength="150" lengthAdjust="spacingAndGlyphs">Teleoperation</text>
+    <line x1="372" y1="56" x2="395" y2="56" stroke="#8793A2" stroke-width="4" stroke-linecap="round"/>
+    <path d="M392 45L408 56L392 67Z" fill="#8793A2"/>
+    <rect x="420" y="24" width="350" height="64" rx="18" fill="#F3F0FF" stroke="#AA9AE6" stroke-width="2"/>
+    <circle cx="460" cy="56" r="16" fill="#806FC1"/>
+    <text x="460" y="63" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">2</text>
+    <text x="492" y="65" font-size="24" font-weight="600" fill="#5C4F9B" textLength="255" lengthAdjust="spacingAndGlyphs">Supervised Fine-Tuning</text>
+    <line x1="782" y1="56" x2="805" y2="56" stroke="#8793A2" stroke-width="4" stroke-linecap="round"/>
+    <path d="M802 45L818 56L802 67Z" fill="#8793A2"/>
+    <rect x="830" y="24" width="350" height="64" rx="18" fill="#FFF4E8" stroke="#EAB277" stroke-width="2"/>
+    <circle cx="872" cy="56" r="16" fill="#D88B43"/>
+    <text x="872" y="63" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">3</text>
+    <text x="904" y="65" font-size="24" font-weight="600" fill="#965B2D" textLength="250" lengthAdjust="spacingAndGlyphs">Online RL Post-Training</text>
+    <line x1="1192" y1="56" x2="1215" y2="56" stroke="#8793A2" stroke-width="4" stroke-linecap="round"/>
+    <path d="M1212 45L1228 56L1212 67Z" fill="#8793A2"/>
+    <rect x="1240" y="24" width="350" height="64" rx="18" fill="#ECF8F2" stroke="#86C9AA" stroke-width="2"/>
+    <circle cx="1285" cy="56" r="16" fill="#55A37D"/>
+    <text x="1285" y="63" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF">4</text>
+    <text x="1317" y="65" font-size="24" font-weight="600" fill="#326F55" textLength="245" lengthAdjust="spacingAndGlyphs">Real-Robot Deployment</text>
+  </g>
+</svg>

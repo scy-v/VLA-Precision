@@ -1,0 +1,119 @@
+# Shared Stage-II deployment template. Copy it once for one complete robot
+# deployment, replace the placeholders, and use that same file for the robot
+# server, environment server, Actor and Learner.
+# Keep task semantics, model profiles, indices, ACoB and buffer settings in
+# ``configs/stage2/tasks/<task>.yaml``.
+# Server: GPU exposed to the online Actor process.
+actor:
+  cuda_visible_devices: "0"
+
+# Server: GPUs exposed to the online Learner process.
+learner:
+  cuda_visible_devices: "2,3"
+
+# Server: GPUs used to build the offline Replay and Context caches.
+preprocess:
+  cuda_visible_devices: "0,1,2,3"
+
+# Server: Optional machine-local dataset location.
+data:
+  # Optional local LeRobot dataset root for Stage-II offline preprocessing.
+  # Leave null to use LeRobot's normal cache.
+  lerobot_root: /path/to/lerobot_dataset_root
+
+# Robot: Endpoint of the low-level robot service.
+robot:
+  # The low-level UR HTTP service normally runs on this same robot computer.
+  # Keep its unauthenticated hardware-control API on loopback.
+  server_url: http://127.0.0.1:5001/
+
+# Robot: Deployment-specific UR controller and service locators. These values are excluded
+# from shared_sha256; force gains, payloads and selections stay in task YAML.
+robot_server:
+  locators:
+    bind_host: 127.0.0.1
+    bind_port: 5001
+    left_robot_ip: LEFT_UR_CONTROLLER_IP
+    # Required only for a dual-arm task.
+    right_robot_ip: RIGHT_UR_CONTROLLER_IP
+    dashboard_port: 29999
+    ur_cap_port: 50002
+
+# Robot: Physical gripper device locators.
+gripper:
+  # ``device`` remains the generic/Franka device. The UR service uses the
+  # explicit per-arm paths so dual-arm assignment cannot drift.
+  device: /dev/FRANKA_PGI_IF_USED
+  left_device: /dev/ur_left_gripper
+  right_device: /dev/ur_right_gripper
+
+# For the established Franka Stage-I hardware boundary, use the local
+# ``franka-start-server`` ZeroRPC endpoint above and expose the serial PGI as a
+# machine locator here. Franka motion/reset values remain in the shared task.
+# robot:
+#   server_url: tcp://127.0.0.1:4242
+# gripper:
+#   device: /dev/franka_pgi_gripper
+
+# Robot: Physical camera devices and capture settings.
+cameras:
+  capture_mode: sync
+  display_image: true
+  devices:
+    base_0_rgb:
+      driver: realsense
+      serial_number: BASE_CAMERA_SERIAL
+      width: 640
+      height: 480
+      fps: 15
+      exposure: 40000
+    left_wrist_0_rgb:
+      driver: realsense
+      serial_number: WRIST_CAMERA_SERIAL
+      width: 640
+      height: 480
+      fps: 15
+      exposure: 40000
+    # Enable this third device only for a dual-arm task preset.
+    # right_wrist_0_rgb:
+    #   driver: realsense
+    #   serial_number: RIGHT_WRIST_CAMERA_SERIAL
+    #   width: 640
+    #   height: 480
+    #   fps: 15
+    #   exposure: 40000
+
+# Dual-arm tasks require two physical evdev paths. Single-arm tasks leave these
+# values null and use the global keyboard listener.
+# teleoperation:
+#   left_device: /dev/input/by-id/LEFT_KEYBOARD
+#   right_device: /dev/input/by-id/RIGHT_KEYBOARD
+
+# Shared: Addresses connecting Actor, Learner, and the robot-side environment.
+network:
+  # Actor connects to this address; Learner binds the corresponding ports.
+  learner_host: LEARNER_IP
+  trainer_port: 3335
+  data_port: 3336
+  # Actor/evaluator connects here. environment_port must match the robot-side
+  # robot-agent bridge; environment_bind_host is used only by that process.
+  environment_host: ROBOT_COMPUTER_IP
+  environment_bind_host: 0.0.0.0
+  environment_port: 50001
+
+# Shared: Runtime paths loaded by server and robot-side processes.
+paths:
+  # Server: Actor and Learner use this same shared storage. Online transitions carry
+  # context IDs while ContextBuffer tensors remain in this experiment tree.
+  train_data_root: /path/to/train_data
+  # For checkpoint.resume=true, Actor and Learner must both see this saved
+  # Stage-II actor/critic checkpoint tree.
+  checkpoint_root: /path/to/checkpoints
+  # Server: Dataset and transformation cache.
+  cache_root: /path/to/cache
+  # Shared: Evaluation results and optional robot-side videos.
+  output_root: ./results
+  # Server: OpenPI-compatible normalization/assets base.
+  openpi_assets_root: ./assets
+  # Auto-downloaded from the pinned SERL release when resnet-pretrained is used.
+  critic_resnet10_params_path: ./assets/resnet10_params.pkl

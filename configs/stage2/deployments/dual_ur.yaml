@@ -1,0 +1,96 @@
+# Physical deployment used by both dual-arm experiments.
+# Actor, Learner, robot server, and environment server load this same file.
+# Server: GPU exposed to the online Actor process.
+actor:
+  cuda_visible_devices: "0"
+
+# Server: GPUs exposed to the online Learner process.
+learner:
+  cuda_visible_devices: "2,3"
+
+# Server: GPUs used to build the offline Replay and Context caches.
+preprocess:
+  cuda_visible_devices: "0,1,2,3"
+
+# Server: Optional machine-local dataset mirror.
+data:
+  # Use LeRobot's normal cache unless a local dataset mirror is configured.
+  lerobot_root: null
+
+# Robot: Loopback endpoint of the low-level dual-UR HTTP service.
+robot:
+  server_url: http://127.0.0.1:5001/
+
+# Robot: Machine addresses used by the low-level dual-UR service.
+robot_server:
+  locators:
+    bind_host: 127.0.0.1
+    bind_port: 5001
+    left_robot_ip: 192.168.201.12
+    right_robot_ip: 192.168.201.11
+    dashboard_port: 29999
+    ur_cap_port: 50002
+
+# Robot: Physical serial devices assigned to the left and right grippers.
+gripper:
+  left_device: /dev/ur_left_gripper
+  right_device: /dev/ur_right_gripper
+
+# Robot: RealSense devices exposed as policy image keys.
+cameras:
+  capture_mode: sync
+  display_image: true
+  devices:
+    base_0_rgb:
+      driver: realsense
+      serial_number: "419622072273"
+      width: 640
+      height: 480
+      fps: 15
+      exposure: 40000
+    left_wrist_0_rgb:
+      driver: realsense
+      serial_number: "346222071609"
+      width: 640
+      height: 480
+      fps: 15
+      exposure: 40000
+    right_wrist_0_rgb:
+      driver: realsense
+      serial_number: "349522072056"
+      width: 640
+      height: 480
+      fps: 15
+      exposure: 40000
+
+# Robot: Physical keyboard devices used for independent dual-arm intervention.
+teleoperation:
+  left_device: /dev/input/by-id/usb-413c_Dell_KB216_Wired_Keyboard-event-kbd
+  right_device: /dev/input/by-id/usb-Logitech_USB_Keyboard-event-kbd
+
+# Shared: AgentLace connects Actor to Learner; Pyro connects Actor to the environment.
+network:
+  # Hostname used by the Actor to reach the Learner.
+  learner_host: localhost
+  # AgentLace request and parameter-broadcast ports.
+  trainer_port: 3335
+  data_port: 3336
+  # Pyro robot-agent bridge running on the robot-side computer.
+  environment_host: 100.116.167.17
+  environment_bind_host: 0.0.0.0
+  environment_port: 50001
+
+# Shared: Runtime paths loaded by server and robot-side processes.
+paths:
+  # Server: Preprocessed transitions and Context Buffer shards.
+  train_data_root: ./train_data
+  # Server: Stage-II Actor and Critic checkpoints.
+  checkpoint_root: ./checkpoints
+  # Server: Dataset and transformation cache.
+  cache_root: ./.cache
+  # Shared: Evaluation results and optional robot-side videos.
+  output_root: ./results
+  # Server: OpenPI normalization assets.
+  openpi_assets_root: ./assets
+  # Auto-downloaded from the pinned SERL release when first needed.
+  critic_resnet10_params_path: ./assets/resnet10_params.pkl
