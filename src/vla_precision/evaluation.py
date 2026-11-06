@@ -157,17 +157,26 @@ def build_sampler(
         policy_factory = policy_config.create_trained_policy
 
     train_config = train_config_builder(resolved.config)
-    if mode == "vla" and int(train_config.model.action_horizon) != resolved.config.task.action_horizon:
-        # The established direct-VLA evaluator samples only the chunk that the
-        # environment will execute. ACoB keeps its training-time model horizon
-        # and selects the executed prefix after sampling.
+    if mode == "vla":
+        from vla_precision.integrations.openpi.configs import get_config
+
+        # The initialization builder uses the Stage-II horizon for preprocessing.
+        # Stage-I evaluation predicts the full model horizon; the rollout's
+        # prepare_environment_actions call trims it to the execution horizon.
+        stage1_model = get_config(resolved.config.openpi.initialization_config_name).model
         train_config = replace(
             train_config,
             model=replace(
                 train_config.model,
-                action_horizon=resolved.config.task.action_horizon,
+                action_horizon=stage1_model.action_horizon,
             ),
         )
+    LOGGER.info(
+        "evaluation mode=%s prediction_horizon=%d execution_horizon=%d",
+        mode,
+        train_config.model.action_horizon,
+        resolved.config.task.action_horizon,
+    )
     checkpoint = resolve_checkpoint(resolved, mode=mode, train_config=train_config)
     policy = policy_factory(
         train_config,
